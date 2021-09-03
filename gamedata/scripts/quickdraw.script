@@ -9,12 +9,12 @@ local item_usage_snd = sound_object("weapons\\spas12\\spas12_draw")
 local knife_name = "animation_hit_wpn_knife5"
 
 local knifesm = { 
-					["wpn_knife3"] = true,
-					["wpn_knife4"] = true,
-					["wpn_knife5"] = true,
-					["wpn_knife"] = true,
-					["wpn_knife2"] = true,
-				 }	
+		["wpn_knife3"] = true,
+		["wpn_knife4"] = true,
+		["wpn_knife5"] = true,
+		["wpn_knife"] = true,
+		["wpn_knife2"] = true,
+		}	
 				 
 local hit_slot = {
 	[0] = true,
@@ -23,7 +23,7 @@ local hit_slot = {
 	[3] = true,
 	[4] = true,
 	[5] = true,
-}
+	}
 
 function on_key_press(key)
 	if (key == 47) then --V
