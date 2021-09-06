@@ -1,0 +1,20 @@
+local keybind_table = {
+	{45,"X"},
+	{46,"C"},
+	{47,"V"},
+	{48,"B"},
+	{44,"Z"},
+	{339,"Middle mouse button"},
+	{340,"Additional mouse button 1"},
+	{341,"Additional mouse button 2"},
+	{56,"Left Alt"},
+}
+
+function on_mcm_load()
+		op = { id= "quick_melee",sh=true ,gr={
+				{ id= "keybind"	,type= "list", val = 2, def = 47, content = keybind_table,no_str = true},
+				}
+			}
+		return op
+end
+
