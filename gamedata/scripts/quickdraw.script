@@ -60,38 +60,47 @@ local hit_slot = {
 
 
 local function flesh_fx(fx_pos)
+	local dir2 = device().cam_dir
+	dir2 = dir2:mul(-1)
+	fx_pos.x = fx_pos.x + 0.3*dir2.x
+	fx_pos.y = fx_pos.y + 0.3*dir2.y
+	fx_pos.z = fx_pos.z + 0.3*dir2.z
 	local hit_fx = particles_object("hit_fx\\hit_flesh_01")
-	local dir2 = device().cam_pos
-	hit_fx:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx:set_direction(dir2)
 	hit_fx:play_at_pos(fx_pos)
 	local hit_fx2 = particles_object("hit_fx\\hit_flesh_02a")
-	hit_fx2:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx2:set_direction(dir2)
 	hit_fx2:play_at_pos(fx_pos)
 	local hit_fx3 = particles_object("hit_fx\\hit_knife_flesh_00")
-	hit_fx3:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx3:set_direction(dir2)
 	hit_fx3:play_at_pos(fx_pos)
 end
 
 local function wood_fx(fx_pos,pos)
-	local dir2 = device().cam_pos
+	local dir2 = device().cam_dir
+	dir2 = dir2:mul(-1)
 	local hit_fx = particles_object("hit_fx\\hit_wood_01")
-	hit_fx:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx:set_direction(dir2)
 	hit_fx:play_at_pos(fx_pos)
 	local hit_fx2 = particles_object("hit_fx\\hit_wood_01a")
-	hit_fx2:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx2:set_direction(dir2)
 	hit_fx2:play_at_pos(fx_pos)
 end
 
 local function metal_fx(fx_pos,pos)
-	local dir2 = device().cam_pos
+	local dir2 = device().cam_dir
+	dir2 = dir2:mul(-1)
+	fx_pos.x = fx_pos.x + 0.1*dir2.x
+	fx_pos.y = fx_pos.y + 0.1*dir2.y
+	fx_pos.z = fx_pos.z + 0.1*dir2.z
 	local hit_fx = particles_object("hit_fx\\hit_metal_00")
-	hit_fx:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx:set_direction(dir2)
 	hit_fx:play_at_pos(fx_pos)
 	local hit_fx2 = particles_object("hit_fx\\hit_metal_01")
-	hit_fx2:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx2:set_direction(dir2)
 	hit_fx2:play_at_pos(fx_pos)
 	local hit_fx3 = particles_object("hit_fx\\hit_metal_02")
-	hit_fx3:set_orientation(dir2.x,dir2.y,dir2.z)
+	hit_fx3:set_direction(dir2)
 	hit_fx3:play_at_pos(fx_pos)
 end
 
@@ -146,7 +155,7 @@ function swing_sound()
 	return true
 end
 
-function ray_test(fx_mat)
+function ray_test()
 	local pos = device().cam_pos
     local dir = device().cam_dir
     local pick = ray_pick()
@@ -162,15 +171,6 @@ function ray_test(fx_mat)
 	fx_pos.x = pos.x + distance*dir.x
 	fx_pos.y = pos.y + distance*dir.y 
 	fx_pos.z = pos.z + distance*dir.z
-	if fx_mat == "metal" then
-		wallmarks_manager():place(dir, fx_pos, 15, 0.2, "explosion_marks", db.actor,-1)
-		metal_fx(fx_pos,fx_pos)
-		return
-	elseif fx_mat == "wood" then
-		wallmarks_manager():place(dir, fx_pos, 15, 0.2, "explosion_marks", db.actor,-1)
-		wood_fx(fx_pos,fx_pos)
-		return
-	end
 	wallmarks_manager():place(dir, fx_pos, 15, 0.2, "explosion_marks", db.actor,-1)
 	metal_fx(fx_pos,fx_pos)
 	local metal_hit_snd = sound_object("quick_melee\\metal\\metal_"..math.random(1,4))
@@ -190,7 +190,8 @@ function hit_test()
 	local cls = obj.clsid and obj:clsid()
 	local bone_prop = quickdraw_bone_mapper.get_bone_prop(cls,bone)
 	local pos = device().cam_pos
-	if (pos:distance_to_sqr(obj:bone_position(bone_prop[1])) > 6) then
+	local obj_dist = pos:distance_to_sqr(obj:bone_position(bone_prop[1]))
+	if ( obj_dist > 6) then
 		return true
 	end
 	
@@ -219,11 +220,21 @@ function hit_test()
 	elseif spawn_name and string.find(spawn_name,"wood") then
 		local wood_hit_snd = sound_object("quick_melee\\wood\\wood_"..math.random(1,4))
 		wood_hit_snd:play(obj, 0, sound_object.s2d)	
-		ray_test("wood")
+		local fx_dist = db.actor:position():distance_to_sqr(obj:bone_position(bone_prop[1]))
+		fx_pos.x = pos.x + fx_dist*dir.x
+		fx_pos.y = pos.y + fx_dist*dir.y
+		fx_pos.z = pos.z + fx_dist*dir.z
+		wallmarks_manager():place_skeleton(obj, "explosion_marks", fx_pos, dir, 0.2,-1)
+		wood_fx(fx_pos,fx_pos)
 	else
 		local metal_hit_snd = sound_object("quick_melee\\metal\\metal_"..math.random(1,4))
-		metal_hit_snd:play(obj, 0, sound_object.s2d)	
-		ray_test("metal")
+		metal_hit_snd:play(obj, 0, sound_object.s2d)
+		local fx_dist = db.actor:position():distance_to_sqr(obj:bone_position(bone_prop[1]))
+		fx_pos.x = pos.x + fx_dist*dir.x
+		fx_pos.y = pos.y + fx_dist*dir.y
+		fx_pos.z = pos.z + fx_dist*dir.z
+		wallmarks_manager():place_skeleton(obj, "explosion_marks", fx_pos, dir, 0.2,-1)
+		metal_fx(fx_pos,fx_pos)
 	end
 	
 	dir:mul(60000)
