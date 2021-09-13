@@ -5,13 +5,15 @@ Quick melee reworked addon:
 ---------------------------
 ---------Author: Feel_Fried
 ---------------------------
------------------------v1.1
+-----------------------v1.5
 ---------------------------
--------------------06.09.21
+-------------------13.09.21
 ---------------------------
 Addon download page: https://www.moddb.com/mods/stalker-anomaly/addons/quick-melee-reworked-151
 --]]
 local keybind = 47
+local wpn = nil
+local weight = 1
 function on_game_start()
 	RegisterScriptCallback("on_key_press",on_key_press)
 	RegisterScriptCallback("on_option_change", loadsettings) 
@@ -121,13 +123,15 @@ function hit_key()
 	anim_sec = "quickdraw_kulak_hit"
 	anim_name = "anm_hide_16x9"
 	last_slot = db.actor:active_slot() or 0
+	weight = 1
 	if last_slot ~= 0 then
 		wpn = db.actor:item_in_slot(last_slot)
+		weight = wpn:weight()
 		if knifesm[wpn:section()] then 
 			return 
 		end
-		anim_sec = armed_anim
-		anim_name = "anm_attack_16x9"
+		anim_sec = IsPistol(wpn) and armed_anim or "quickdraw_wpn_b_hit"
+		anim_name = IsPistol(wpn) and "anm_attack_16x9" or "anm_show_16x9"
 	end
 	anm_state = 1
 
@@ -144,6 +148,7 @@ end
 function anim_init()
 	outfit_noise_snd:play(db.actor, 0, sound_object.s2d)	
 	game.play_hud_motion(2, anim_sec .. "_hud", anim_name, true, 1)
+	level.add_cam_effector('quick_melee\\attack_an.anm', 8073, false,'')
 	CreateTimeEvent("quick_melee_reworked", 2, 0.5, hit_test)
 	CreateTimeEvent("quick_melee_reworked", 4, 0.35, swing_sound)
 	return true
@@ -159,7 +164,7 @@ function ray_test()
 	local pos = device().cam_pos
     local dir = device().cam_dir
     local pick = ray_pick()
-    local dist = 2
+    local dist = 1.5
     pick:set_position(pos)
     pick:set_direction(dir)
     pick:set_flags(2)
@@ -177,16 +182,47 @@ function ray_test()
 	metal_hit_snd:play(db.actor, 0, sound_object.s2d)
 end
 
+
+function ray_hit_test()
+	local pos = device().cam_pos
+    local dir = device().cam_dir
+	local actor = db.actor
+    local dist = 1.6
+	local pick = ray_pick()
+	pick:set_ignore_object(actor)
+	pick:set_position(pos)
+	pick:set_flags(1)
+	pick:set_range(dist)
+	dir.x = dir.x - 0.016
+	dir.z = dir.z - 0.016
+	dir.y = dir.y - 0.016
+	for i = 1,16 do
+		dir.x = dir.x + 0.002
+		dir.z = dir.z + 0.002
+		dir.y = dir.y + 0.002
+		pick:set_direction(dir)
+		pick:query()
+		obj_o = pick:get_object()
+		obj_b = pick:get_element()
+		if obj_o then
+			return {obj_o,obj_b}
+		end
+	end
+	return nil
+end
+
 function hit_test()
 	level.add_cam_effector('shoot\\s3_e1_1.anm', 8063, false,'')
-	local obj = level.get_target_obj()
 	CreateTimeEvent("quick_melee_reworked", 3, 1.22, anim_end)
+	local obj = level.get_target_obj()
+	obj_ent = ray_hit_test()
+	obj = obj and obj or (obj_ent and obj_ent[1])
 	if not obj then
 		ray_test()
 		return true
 	end
-	
-	local bone = level.get_target_element()
+	local bone = obj_ent and obj_ent[2] or level.get_target_element()
+	--local bone = level.get_target_element()
 	local cls = obj.clsid and obj:clsid()
 	local bone_prop = quickdraw_bone_mapper.get_bone_prop(cls,bone)
 	local pos = device().cam_pos
@@ -200,7 +236,7 @@ function hit_test()
 	local dir = device().cam_dir
 	local fx_pos = obj:bone_position(bone_prop[1])
 	local spawn_name = ini_sys:r_string_ex(obj:section(),"$spawn")
-	h.power = bone_prop[2]
+	h.power = weight*bone_prop[2]
 	h.direction = dir
 	h.bone = bone_prop[1] 
 	h.draftsman = who

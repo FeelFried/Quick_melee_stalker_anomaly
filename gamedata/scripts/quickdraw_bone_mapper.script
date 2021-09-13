@@ -5,15 +5,15 @@ Quick melee reworked addon:
 ---------------------------
 ---------Author: Feel_Fried
 ---------------------------
------------------------v1.1
+-----------------------v1.5
 ---------------------------
--------------------06.09.21
+-------------------13.09.21
 ---------------------------
 Addon download page: https://www.moddb.com/mods/stalker-anomaly/addons/quick-melee-reworked-151
 --]]
 
-local normal_damage = 1.5
-local critical_damage = 3.2
+local normal_damage = 0.35
+local critical_damage = 0.7
 
 local chimera = {
 [0]  = {"hip", normal_damage},
