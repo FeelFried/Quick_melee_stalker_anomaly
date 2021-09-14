@@ -5,15 +5,17 @@ Quick melee reworked addon:
 ---------------------------
 ---------Author: Feel_Fried
 ---------------------------
------------------------v1.5
+-----------------------v1.6
 ---------------------------
--------------------13.09.21
+-------------------14.09.21
 ---------------------------
 Addon download page: https://www.moddb.com/mods/stalker-anomaly/addons/quick-melee-reworked-151
 --]]
 local keybind = 47
 local wpn = nil
 local weight = 1
+local anim_hit_time = 1
+local cam_name = "attack_an.anm"
 function on_game_start()
 	RegisterScriptCallback("on_key_press",on_key_press)
 	RegisterScriptCallback("on_option_change", loadsettings) 
@@ -56,7 +58,7 @@ local hit_slot = {
 	[2] = true,
 	[3] = true,
 	[4] = true,
-	[5] = true,
+	[5] = false,
 	[6] = true,
 }
 local function clamp(x,min,max)
@@ -125,7 +127,9 @@ function hit_key()
 	anim_sec = "quickdraw_kulak_hit"
 	anim_name = "anm_hide_16x9"
 	last_slot = db.actor:active_slot() or 0
-	weight = 1
+	weight = 0.5
+	anim_hit_time = 1
+	cam_name = "attack_an.anm"
 	if last_slot ~= 0 then
 		wpn = db.actor:item_in_slot(last_slot)
 		weight = wpn:weight()
@@ -134,6 +138,16 @@ function hit_key()
 		end
 		anim_sec = IsPistol(wpn) and armed_anim or "quickdraw_wpn_b_hit"
 		anim_name = IsPistol(wpn) and "anm_attack_16x9" or "anm_show_16x9"
+		anim_hit_time = IsPistol(wpn) and 1 or 1.5
+		cam_name = IsPistol(wpn) and "attack_an.anm" or "attack_an2.anm"
+	end
+	
+	if last_slot == 4 or last_slot == 6 then
+		anim_sec = armed_anim
+		anim_name = "anm_attack_16x9"
+		anim_hit_time = 1
+		weight = 0.5
+		cam_name = "attack_an.anm"
 	end
 	anm_state = 1
 
@@ -149,10 +163,10 @@ end
 
 function anim_init()
 	outfit_noise_snd:play(db.actor, 0, sound_object.s2d)	
-	game.play_hud_motion(2, anim_sec .. "_hud", anim_name, true, 1)
-	level.add_cam_effector('quick_melee\\attack_an.anm', 8073, false,'')
-	CreateTimeEvent("quick_melee_reworked", 2, 0.5, hit_test)
-	CreateTimeEvent("quick_melee_reworked", 4, 0.35, swing_sound)
+	game.play_hud_motion(2, anim_sec .. "_hud", anim_name, true, anim_hit_time)
+	level.add_cam_effector('quick_melee\\'..cam_name, 8073, false,'')
+	CreateTimeEvent("quick_melee_reworked", 2, 0.5/anim_hit_time, hit_test)
+	CreateTimeEvent("quick_melee_reworked", 4, 0.35/anim_hit_time, swing_sound)
 	return true
 end
 
@@ -215,9 +229,11 @@ end
 
 function hit_test()
 	level.add_cam_effector('shoot\\s3_e1_1.anm', 8063, false,'')
-	CreateTimeEvent("quick_melee_reworked", 3, 1.22, anim_end)
+	CreateTimeEvent("quick_melee_reworked", 3, 1.22/anim_hit_time, anim_end)
 	local obj = level.get_target_obj()
-	obj_ent = ray_hit_test()
+	if not obj then
+		obj_ent = ray_hit_test()
+	end
 	obj = obj and obj or (obj_ent and obj_ent[1])
 	if not obj then
 		ray_test()
@@ -285,7 +301,7 @@ function hit_test()
 			ph:apply_force(dir.x,dir.y,dir.z)
 		end
 	end
-	
+	obj_ent = nil
 	return true
 end
 
