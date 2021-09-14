@@ -59,7 +59,9 @@ local hit_slot = {
 	[5] = true,
 	[6] = true,
 }
-
+local function clamp(x,min,max)
+	return math.min(math.max(x, min), max)
+end
 
 local function flesh_fx(fx_pos)
 	local dir2 = device().cam_dir
@@ -193,13 +195,13 @@ function ray_hit_test()
 	pick:set_position(pos)
 	pick:set_flags(1)
 	pick:set_range(dist)
-	dir.x = dir.x - 0.016
-	dir.z = dir.z - 0.016
-	dir.y = dir.y - 0.016
-	for i = 1,16 do
-		dir.x = dir.x + 0.002
-		dir.z = dir.z + 0.002
-		dir.y = dir.y + 0.002
+	dir.x = clamp(dir.x - 0.032,-1,1)
+	dir.z = clamp(dir.z - 0.032,-1,1)
+	dir.y = clamp(dir.y - 0.032,-1,1)
+	for i = 1,32 do
+		dir.x = clamp(dir.x + 0.002,-1,1)
+		dir.z = clamp(dir.z + 0.002,-1,1)
+		dir.y = clamp(dir.y + 0.002,-1,1)
 		pick:set_direction(dir)
 		pick:query()
 		obj_o = pick:get_object()
