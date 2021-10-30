@@ -263,7 +263,6 @@ function hit_test()
 	local fx_pos = obj:bone_position(bone_prop[1])
 	local spawn_name = ini_sys:r_string_ex(obj:section(),"$spawn")
 	h.power = weight*bone_prop[2]
-	printf(bone_prop[2])
 	h.direction = dir
 	h.bone = bone_prop[1] 
 	h.draftsman = who
