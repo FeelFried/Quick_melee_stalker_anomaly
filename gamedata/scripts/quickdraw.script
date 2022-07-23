@@ -45,10 +45,6 @@ end
 
 local anm_state = 0
 local outfit_noise_snd = sound_object("weapons\\spas12\\spas12_draw")
---local flesh_hit_snd = sound_object("quick_melee\\flesh\\flesh_"..math.random(1,6))
---local wood_hit_snd = sound_object("quick_melee\\wood\\wood_"..math.random(1,4))
---local metal_hit_snd = sound_object("quick_melee\\metal\\metal_"..math.random(1,4))
---local swing_snd = sound_object("quick_melee\\swing\\swing_"..math.random(1,6))
 	
 local armed_anim = "quickdraw_wpn_hit"
 
@@ -69,9 +65,6 @@ local hit_slot = {
 	[5] = false,
 	[6] = true,
 }
-local function clamp(x,min,max)
-	return math.min(math.max(x, min), max)
-end
 
 local function flesh_fx(fx_pos)
 	local dir2 = device().cam_dir
@@ -206,7 +199,12 @@ function ray_test()
 	metal_hit_snd:play(db.actor, 0, sound_object.s2d)
 end
 
-
+-- 17 d = 0.296706 r
+-- 1 d = 0.017453 r
+local sin_full = math.sin(-0.296706)
+local cos_full = math.cos(-0.296706)
+local sin_step = math.sin(0.017453)
+local cos_step = math.cos(0.017453)
 function ray_hit_test()
 	local pos = device().cam_pos
     local dir = device().cam_dir
@@ -217,13 +215,15 @@ function ray_hit_test()
 	pick:set_position(pos)
 	pick:set_flags(1)
 	pick:set_range(dist)
-	dir.x = clamp(dir.x - 0.032,-1,1)
-	dir.z = clamp(dir.z - 0.032,-1,1)
-	dir.y = clamp(dir.y - 0.032,-1,1)
+	local x = (dir.x*cos_full)+(dir.z*sin_full)
+	local z = (dir.z*cos_full)-(dir.x*sin_full)
+	dir.x = x
+	dir.z = z
 	for i = 1,32 do
-		dir.x = clamp(dir.x + 0.002,-1,1)
-		dir.z = clamp(dir.z + 0.002,-1,1)
-		dir.y = clamp(dir.y + 0.002,-1,1)
+		x = (dir.x*cos_step)+(dir.z*sin_step)
+		z = (dir.z*cos_step)-(dir.x*sin_step)
+		dir.x = x
+		dir.z = z
 		pick:set_direction(dir)
 		pick:query()
 		obj_o = pick:get_object()
